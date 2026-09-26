@@ -1,0 +1,6 @@
+# MetricMind — Python dependencies (data + API layers).
+# Phase 1 (data warehouse) needs only duckdb + python-dotenv;
+# later phases add dbt, FastAPI, and the local-LLM client.
+
+duckdb>=1.1
+python-dotenv>=1.0
