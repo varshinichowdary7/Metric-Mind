@@ -1,0 +1,14 @@
+geo_id,country,region,continent
+1,Sweden,Nordics,Europe
+2,Norway,Nordics,Europe
+3,Denmark,Nordics,Europe
+4,Germany,DACH,Europe
+5,Austria,DACH,Europe
+6,Switzerland,DACH,Europe
+7,France,Western Europe,Europe
+8,Netherlands,Western Europe,Europe
+9,United States,US,North America
+10,Canada,Canada,North America
+11,Japan,East Asia,Asia
+12,India,South Asia,Asia
+13,Singapore,SE Asia,Asia
