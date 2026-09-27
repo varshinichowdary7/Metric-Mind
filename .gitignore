@@ -25,6 +25,7 @@ yarn-error.log*
 dbt/target/
 dbt/dbt_packages/
 dbt/logs/
+dbt/.user.yml
 logs/
 
 # ── DuckDB warehouse (regenerated from seeds) ──
