@@ -4,3 +4,6 @@
 
 duckdb>=1.1
 python-dotenv>=1.0
+
+# Phase 2 — dbt transformation layer (staging -> marts star schema).
+dbt-duckdb>=1.8

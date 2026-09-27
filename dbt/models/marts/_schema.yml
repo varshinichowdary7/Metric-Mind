@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "Calendar dimension derived from order dates."
+    columns:
+      - name: date_id
+        description: "Surrogate key, YYYYMMDD."
+        tests: [unique, not_null]
+
+  - name: dim_geography
+    description: "Geography dimension (country -> region -> continent)."
+    columns:
+      - name: geo_id
+        tests: [unique, not_null]
+
+  - name: dim_product
+    description: "Product dimension (product -> category)."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+
+  - name: fct_sales
+    description: "Sales fact, one row per order. Revenue + cost components."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: date_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_id
+      - name: geo_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_geography')
+                field: geo_id
+      - name: product_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+      - name: revenue
+        tests: [not_null]
+
+  - name: fct_order_costs
+    description: "Cost fact, one row per (order, cost_type)."
+    columns:
+      - name: cost_id
+        tests: [unique, not_null]
+      - name: cost_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["material", "shipping"]

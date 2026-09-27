@@ -1,0 +1,12 @@
+# dbt profile for MetricMind. No secrets here — the warehouse is a local
+# DuckDB file. Run dbt from the repo root with:
+#   dbt run  --project-dir dbt --profiles-dir dbt
+#   dbt test --project-dir dbt --profiles-dir dbt
+metricmind:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/warehouse.duckdb') }}"
+      schema: main
+      threads: 4

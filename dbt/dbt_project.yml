@@ -1,0 +1,21 @@
+name: "metricmind"
+version: "1.0.0"
+config-version: 2
+
+profile: "metricmind"
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages", "logs"]
+
+# Staging is ephemeral-ish (views); marts are materialized tables that the
+# Cube.dev semantic layer reads. Custom schemas are emitted verbatim
+# (see macros/generate_schema_name.sql) so Cube can reference `marts.fct_sales`.
+models:
+  metricmind:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
