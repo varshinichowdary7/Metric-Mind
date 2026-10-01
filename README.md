@@ -82,6 +82,31 @@ python data/load_duckdb.py
 anomaly the agent will later explain when asked *"Why did European margins drop
 last quarter?"*.
 
+## Run the semantic layer + agent (Phases 3–4)
+
+```bash
+# Terminal A — governed semantic layer (Cube-compatible /meta + /load)
+python -m uvicorn semantic.server:app --port 4000
+
+# LM Studio — load a model and start its server on :1234.
+#   LLM_MODEL=qwen/qwen3.8-27b        best quality (heavier)
+#   LLM_MODEL=nvidia/nemotron-3-nano  lighter + faster (set in .env)
+
+# Terminal B — agent API
+python -m uvicorn api.main:app --port 8001
+
+# Ask a business question
+curl -X POST http://localhost:8001/chat -H "Content-Type: application/json" \
+  -d '{"question":"What was total revenue in 2025-Q3?"}'
+```
+
+The agent returns the answer plus a `trace` of the exact governed queries it ran
+(the basis for the UI's "View API call" panel). Notes:
+- Reasoning models spend tokens thinking before the tool call — `LLM_MAX_TOKENS`
+  defaults to 4096; lower it only for simple models.
+- If LM Studio reports *"Engine protocol startup was aborted"* it ran out of
+  memory loading the model; restart its server or switch to the lighter model.
+
 ## Repository layout
 
 ```
