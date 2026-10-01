@@ -1,0 +1,14 @@
+cubes:
+  - name: product
+    sql_table: marts.dim_product
+    dimensions:
+      - name: product_id
+        sql: product_id
+        type: number
+        primary_key: true
+      - name: product
+        sql: product
+        type: string
+      - name: category
+        sql: category
+        type: string

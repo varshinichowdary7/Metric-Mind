@@ -1,0 +1,24 @@
+# MetricMind — optional production swap for the semantic layer.
+#
+# The default local stack uses the Python semantic layer (semantic/), which
+# serves the same /meta + /load contract and needs no containers. This compose
+# file runs Cube.dev OSS over the *same* DuckDB marts, with cube models under
+# cube/model/ that mirror the Python member names (sales.margin, geography.region,
+# order_costs.cost_type, ...).
+#
+#   docker compose up cube      # Cube Playground + REST API on http://localhost:4000
+#
+# Then point the agent at Cube by setting SEMANTIC_API_URL to the Cube REST API.
+services:
+  cube:
+    image: cubejs/cube:latest
+    ports:
+      - "4000:4000"
+    environment:
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_DB_TYPE: duckdb
+      CUBEJS_DB_DUCKDB_DATABASE_PATH: /warehouse/warehouse.duckdb
+      CUBEJS_API_SECRET: ${CUBE_API_SECRET:-dev-secret-change-me}
+    volumes:
+      - ./cube:/cube/conf
+      - ./data:/warehouse

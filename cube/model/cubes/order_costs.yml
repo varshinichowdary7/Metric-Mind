@@ -1,0 +1,28 @@
+cubes:
+  - name: order_costs
+    sql_table: marts.fct_order_costs
+    joins:
+      - name: date
+        sql: "{CUBE}.date_id = {date}.date_id"
+        relationship: many_to_one
+      - name: geography
+        sql: "{CUBE}.geo_id = {geography}.geo_id"
+        relationship: many_to_one
+      - name: product
+        sql: "{CUBE}.product_id = {product}.product_id"
+        relationship: many_to_one
+    dimensions:
+      - name: cost_id
+        sql: cost_id
+        type: number
+        primary_key: true
+      - name: cost_type
+        sql: cost_type
+        type: string
+      - name: order_date
+        sql: "{date}.date"
+        type: time
+    measures:
+      - name: cost_amount
+        sql: cost_amount
+        type: sum
