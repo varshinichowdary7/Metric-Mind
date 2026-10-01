@@ -1,0 +1,17 @@
+cubes:
+  - name: geography
+    sql_table: marts.dim_geography
+    dimensions:
+      - name: geo_id
+        sql: geo_id
+        type: number
+        primary_key: true
+      - name: country
+        sql: country
+        type: string
+      - name: region
+        sql: region
+        type: string
+      - name: continent
+        sql: continent
+        type: string

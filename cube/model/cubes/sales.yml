@@ -1,0 +1,43 @@
+cubes:
+  - name: sales
+    sql_table: marts.fct_sales
+    joins:
+      - name: date
+        sql: "{CUBE}.date_id = {date}.date_id"
+        relationship: many_to_one
+      - name: geography
+        sql: "{CUBE}.geo_id = {geography}.geo_id"
+        relationship: many_to_one
+      - name: product
+        sql: "{CUBE}.product_id = {product}.product_id"
+        relationship: many_to_one
+    dimensions:
+      - name: order_id
+        sql: order_id
+        type: number
+        primary_key: true
+      - name: order_date
+        sql: "{date}.date"
+        type: time
+    measures:
+      - name: revenue
+        sql: revenue
+        type: sum
+      - name: cost
+        sql: cost
+        type: sum
+      - name: material_cost
+        sql: material_cost
+        type: sum
+      - name: shipping_cost
+        sql: shipping_cost
+        type: sum
+      - name: order_count
+        type: count
+      # The one shared definition of margin.
+      - name: margin
+        sql: "{revenue} - {cost}"
+        type: number
+      - name: margin_pct
+        sql: "100.0 * ({revenue} - {cost}) / NULLIF({revenue}, 0)"
+        type: number

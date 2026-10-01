@@ -1,0 +1,20 @@
+cubes:
+  - name: date
+    sql_table: marts.dim_date
+    dimensions:
+      - name: date_id
+        sql: date_id
+        type: number
+        primary_key: true
+      - name: date
+        sql: date
+        type: time
+      - name: quarter_label
+        sql: quarter_label
+        type: string
+      - name: month
+        sql: month
+        type: number
+      - name: year
+        sql: year
+        type: number
