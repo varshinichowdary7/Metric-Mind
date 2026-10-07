@@ -27,9 +27,9 @@ from datetime import date
 
 import duckdb
 
+from .guardrails import DEFAULT_LIMIT, GuardrailError, MAX_LIMIT, apply as apply_guardrails
+
 MARTS = "marts"
-DEFAULT_LIMIT = 500
-MAX_LIMIT = 5000
 
 # ── Join graph (from the base fact, aliased `f`) ─────────────────────────────
 # alias -> (marts table, ON condition)
@@ -284,7 +284,11 @@ def build_sql(query: dict) -> tuple[str, list, dict]:
 
 
 def load(query: dict, con: duckdb.DuckDBPyConnection | None = None) -> dict:
-    """Compile + run a semantic query. Returns Cube-style {data, annotation, sql}."""
+    """Compile + run a semantic query. Returns Cube-style {data, annotation, sql}.
+
+    Cost-governance guardrails run first (row-limit clamp + complexity caps);
+    they raise GuardrailError, which the server surfaces as HTTP 400."""
+    query = apply_guardrails(query)
     sql, params, annotation = build_sql(query)
     own = con is None
     con = con or connect(read_only=True)

@@ -25,7 +25,7 @@ try:
 except Exception:
     pass
 
-from .model import SemanticError, load, meta
+from .model import GuardrailError, SemanticError, load, meta
 
 app = FastAPI(title="MetricMind Semantic Layer", version="1.0.0")
 
@@ -64,8 +64,8 @@ def get_meta() -> dict:
 def post_load(query: Query) -> dict:
     try:
         return load(query.model_dump())
-    except SemanticError as exc:
-        # Governance rejection — the agent asked for something not allowed.
+    except (SemanticError, GuardrailError) as exc:
+        # Governance rejection — unknown member, fact mix, or an over-budget query.
         raise HTTPException(status_code=400, detail=str(exc))
 
 
