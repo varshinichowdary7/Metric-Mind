@@ -21,7 +21,10 @@ import time
 from openai import OpenAI
 
 from . import config
+from .analysis import decompose_margin_change
 from .semantic_client import get_meta, load as semantic_load
+
+CONTINENTS = ["Europe", "North America", "Asia"]
 
 # Reasoning models (nemotron, qwen3) spend tokens thinking before the tool call,
 # so give generous headroom or they finish with reason="length" and no output.
@@ -47,10 +50,13 @@ Query notes:
   query — query them separately.
 - The data covers 2024-01 through 2025-09; "last quarter" is 2025-Q3.
 
-When asked WHY a metric moved, decompose it: first measure the change, then drill
-into its drivers (e.g. break cost down by `order_costs.cost_type` to compare
-shipping vs material). After gathering the data, give a concise, specific answer
-that cites the actual numbers.
+When asked WHY margin changed for a continent, call `explain_margin_change`
+(continent, period_a, period_b). It returns the margin change attributed to
+revenue vs material-cost vs shipping-cost drivers and names the dominant driver —
+use it instead of chaining many queries. For other "why" questions, decompose
+manually: measure the change, then drill into its drivers (e.g. break cost down by
+`order_costs.cost_type`). After gathering the data, give a concise, specific answer
+that cites the actual numbers and names the main driver.
 
 /no_think
 """
@@ -114,6 +120,38 @@ def _tool_def(meta: dict) -> dict:
     }
 
 
+def _explain_tool() -> dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "explain_margin_change",
+            "description": (
+                "Explain WHY margin changed for a continent between two periods: "
+                "returns the margin change attributed to revenue, material-cost and "
+                "shipping-cost drivers, plus the dominant driver. Use this for "
+                "'why did margin drop/change' questions."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "continent": {"type": "string", "enum": CONTINENTS},
+                    "period_a": {"type": "string", "description": "earlier period, e.g. '2025-Q2'"},
+                    "period_b": {"type": "string", "description": "later period, e.g. '2025-Q3' or 'last quarter'"},
+                },
+                "required": ["continent", "period_a", "period_b"],
+            },
+        },
+    }
+
+
+def _dispatch_tool(name: str, args: dict) -> dict:
+    if name == "query_semantic_layer":
+        return semantic_load(args)
+    if name == "explain_margin_change":
+        return decompose_margin_change(**args)
+    return {"error": f"unknown tool {name}"}
+
+
 def _clean(text: str | None) -> str:
     # qwen3 can emit <think>...</think> reasoning; keep only the final answer.
     return re.sub(r"<think>.*?</think>", "", text or "", flags=re.S).strip()
@@ -135,7 +173,7 @@ def _chat(client: OpenAI, **kwargs):
 
 def run_agent(question: str, max_steps: int = 5) -> dict:
     meta = get_meta()
-    tool = _tool_def(meta)
+    tools = [_tool_def(meta), _explain_tool()]
     client = OpenAI(base_url=config.LLM_BASE_URL, api_key=config.LLM_API_KEY)
 
     system = SYSTEM_PROMPT.format(
@@ -154,7 +192,7 @@ def run_agent(question: str, max_steps: int = 5) -> dict:
             client,
             model=config.LLM_MODEL,
             messages=messages,
-            tools=[tool],
+            tools=tools,
             tool_choice="auto",
             temperature=0,
             max_tokens=MAX_TOKENS,
@@ -180,16 +218,14 @@ def run_agent(question: str, max_steps: int = 5) -> dict:
         )
 
         for tc in msg.tool_calls:
+            args = {}
             try:
                 args = json.loads(tc.function.arguments or "{}")
+                result = _dispatch_tool(tc.function.name, args)
             except json.JSONDecodeError as exc:
-                args, result = {}, {"error": f"invalid tool arguments JSON: {exc}"}
-            else:
-                result = (
-                    semantic_load(args)
-                    if tc.function.name == "query_semantic_layer"
-                    else {"error": f"unknown tool {tc.function.name}"}
-                )
+                result = {"error": f"invalid tool arguments JSON: {exc}"}
+            except Exception as exc:  # noqa: BLE001 - surface tool failure to the model
+                result = {"error": f"{type(exc).__name__}: {exc}"}
             trace.append({"tool": tc.function.name, "query": args, "result": result})
             messages.append(
                 {
