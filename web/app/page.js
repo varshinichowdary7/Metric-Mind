@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import Chart from "./chart";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
 const SAMPLES = [
@@ -102,10 +104,18 @@ export default function Home() {
 function Message({ m }) {
   const [open, setOpen] = useState(false);
   const hasTrace = Array.isArray(m.trace) && m.trace.length > 0;
+  // Charts are chosen server-side (api/viz.py) from each governed result's
+  // annotation; render the ones that resolved to an actual visualization.
+  const charts = (m.trace || []).filter(
+    (t) => t.viz && t.viz.chart !== "none" && t.result?.data?.length
+  );
   return (
     <div className={`msg ${m.role}`}>
       <div className={`bubble ${m.error ? "error" : ""}`}>
         <div className="content">{m.content}</div>
+        {charts.map((t, i) => (
+          <Chart key={i} viz={t.viz} result={t.result} />
+        ))}
         {hasTrace && (
           <div className="trace">
             <button type="button" className="toggle" onClick={() => setOpen((o) => !o)}>
