@@ -114,9 +114,9 @@ Metric-Mind/
 ├─ data/          mock data generator + DuckDB loader   (Phase 1)
 ├─ dbt/           staging → marts star schema           (Phase 2)
 ├─ cube/          Cube.dev semantic layer (margin, …)   (Phase 3)
-├─ api/           FastAPI + local-LLM agent + guardrails (Phase 4–5)
+├─ api/           FastAPI + local-LLM agent + chart picker (Phase 4–5, 9)
 ├─ tests/         governance / determinism evals         (Phase 6)
-├─ web/           Next.js chat UI                         (Phase 8)
+├─ web/           Next.js chat UI + ECharts               (Phase 8–9)
 └─ docker-compose.yml
 ```
 
@@ -132,7 +132,7 @@ MetricMind is built backend-first, one feature branch per phase:
 6. `feat/determinism-eval` — "Q3 revenue 20×" reproducibility test
 7. `feat/multi-step-reasoning` — ReAct drill-down (margin drop → cost type)
 8. `feat/chat-ui` — Next.js + Tremor + ECharts streaming UI
-9. `feat/dynamic-viz` — chart selection from Cube annotations
+9. `feat/dynamic-viz` — chart selection from Cube annotations *(deterministic, in `api/viz.py`)*
 10. `feat/transparency` — "View SQL / View API call" panel
 11. `feat/polish-docs` — Compose wiring + docs
 
