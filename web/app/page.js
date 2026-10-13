@@ -119,14 +119,27 @@ function Message({ m }) {
         {hasTrace && (
           <div className="trace">
             <button type="button" className="toggle" onClick={() => setOpen((o) => !o)}>
-              {open ? "Hide" : "View"} API call ({m.trace.length})
+              {open ? "Hide" : "View"} query &amp; SQL ({m.trace.length})
             </button>
             {open && (
               <div className="trace-body">
                 {m.trace.map((t, i) => (
                   <div key={i} className="trace-item">
                     <div className="trace-tool">{t.tool}</div>
+
+                    <div className="trace-label">Semantic query · the agent emits JSON, never SQL</div>
                     <pre>{JSON.stringify(t.query, null, 2)}</pre>
+
+                    {t.sql_preview && (
+                      <>
+                        <div className="trace-label">
+                          Compiled SQL · the semantic layer owns this
+                        </div>
+                        <pre className="trace-sql">{t.sql_preview}</pre>
+                      </>
+                    )}
+
+                    <div className="trace-label">Result</div>
                     <pre className="trace-result">
                       {JSON.stringify(t.result?.data ?? t.result, null, 2)}
                     </pre>

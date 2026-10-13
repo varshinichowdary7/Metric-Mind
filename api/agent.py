@@ -23,6 +23,7 @@ from openai import OpenAI
 from . import config
 from .analysis import decompose_margin_change
 from .semantic_client import get_meta, load as semantic_load
+from .transparency import inline_sql
 from .viz import recommend_chart
 
 CONTINENTS = ["Europe", "North America", "Asia"]
@@ -228,14 +229,21 @@ def run_agent(question: str, max_steps: int = 5) -> dict:
             except Exception as exc:  # noqa: BLE001 - surface tool failure to the model
                 result = {"error": f"{type(exc).__name__}: {exc}"}
             entry = {"tool": tc.function.name, "query": args, "result": result}
-            # Attach a chart recommendation for the UI (not shown to the model):
-            # it is derived purely from the governed result's annotation + data.
+            # Enrich query_semantic_layer entries for the UI (not shown to the
+            # model): a chart recommendation and a readable "compiled SQL"
+            # preview, both derived purely from the governed result.
             if (
                 tc.function.name == "query_semantic_layer"
                 and isinstance(result, dict)
                 and "annotation" in result
             ):
                 entry["viz"] = recommend_chart(result.get("annotation"), result.get("data"))
+            if (
+                tc.function.name == "query_semantic_layer"
+                and isinstance(result, dict)
+                and result.get("sql")
+            ):
+                entry["sql_preview"] = inline_sql(result["sql"], result.get("params"))
             trace.append(entry)
             messages.append(
                 {
