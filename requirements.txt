@@ -18,3 +18,6 @@ httpx>=0.27
 
 # Phase 6 — governance / determinism test suite.
 pytest>=8.0
+
+# Phase 11 — Cube-parity test reads the cube/ YAML model.
+pyyaml>=6.0

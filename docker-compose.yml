@@ -4,14 +4,22 @@
 # serves the same /meta + /load contract and needs no containers. This compose
 # file runs Cube.dev OSS over the *same* DuckDB marts, with cube models under
 # cube/model/ that mirror the Python member names (sales.margin, geography.region,
-# order_costs.cost_type, ...).
+# order_costs.cost_type, ...). tests/test_cube_parity.py enforces that those names
+# stay in sync, so the swap below stays drop-in.
 #
-#   docker compose up cube      # Cube Playground + REST API on http://localhost:4000
+# Cube is opt-in behind a profile, so a bare `docker compose up` never starts it
+# by accident. Bring it up either way:
 #
-# Then point the agent at Cube by setting SEMANTIC_API_URL to the Cube REST API.
+#   docker compose up cube                # name the service explicitly, or
+#   docker compose --profile cube up      # activate the profile
+#
+# It serves the Cube Playground + REST API on http://localhost:4000. Then point
+# the agent at Cube: set SEMANTIC_API_URL to the Cube REST API (see .env.example)
+# and restart `uvicorn api.main:app`. Nothing else changes — same member names.
 services:
   cube:
     image: cubejs/cube:latest
+    profiles: ["cube"]
     ports:
       - "4000:4000"
     environment:
