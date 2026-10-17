@@ -17,7 +17,10 @@ cubes:
         type: number
         primary_key: true
       - name: order_date
-        sql: "{date}.date"
+        # date_id is stored as YYYYMMDD. Derive the date in this cube instead
+        # of proxying through the joined date cube (Cube rejects foreign-cube
+        # references inside a member definition).
+        sql: "strptime(CAST({CUBE}.date_id AS VARCHAR), '%Y%m%d')"
         type: time
     measures:
       - name: revenue

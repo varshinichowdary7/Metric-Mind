@@ -18,7 +18,7 @@ import os
 import re
 import time
 
-from openai import OpenAI
+from openai import APIConnectionError, OpenAI, OpenAIError
 
 from . import config
 from .analysis import decompose_margin_change
@@ -162,6 +162,13 @@ def _clean(text: str | None) -> str:
 def _chat(client: OpenAI, **kwargs):
     """Call the LLM, retrying transient LM Studio load hiccups (a local model
     server can abort an engine start under memory pressure and recover on retry)."""
+    # Gemma 4's LM Studio template can spend most of a small response budget in
+    # its reasoning channel. Disable that channel for this metric-query agent.
+    if config.LLM_MODEL.startswith(("google/gemma-4", "gemma-4")):
+        kwargs.setdefault(
+            "extra_body",
+            {"chat_template_kwargs": {"enable_thinking": False}},
+        )
     last_error = None
     for attempt in range(3):
         try:
@@ -171,6 +178,35 @@ def _chat(client: OpenAI, **kwargs):
             if attempt < 2:
                 time.sleep(2 * (attempt + 1))
     raise last_error
+
+
+def llm_status() -> dict:
+    """Report whether LM Studio is reachable and which model IDs it serves."""
+    client = OpenAI(
+        base_url=config.LLM_BASE_URL,
+        api_key=config.LLM_API_KEY,
+        timeout=5.0,
+        max_retries=0,
+    )
+    try:
+        models = client.models.list().data
+    except Exception as exc:  # noqa: BLE001 - return an actionable local status
+        return {
+            "connected": False,
+            "base_url": config.LLM_BASE_URL,
+            "configured_model": config.LLM_MODEL,
+            "available_models": [],
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+    available = [model.id for model in models]
+    return {
+        "connected": True,
+        "base_url": config.LLM_BASE_URL,
+        "configured_model": config.LLM_MODEL,
+        "model_available": config.LLM_MODEL in available,
+        "available_models": available,
+    }
 
 
 def run_agent(question: str, max_steps: int = 5) -> dict:

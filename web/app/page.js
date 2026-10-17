@@ -30,7 +30,10 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-      if (!res.ok) throw new Error(`API responded ${res.status}`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.detail || `API responded ${res.status}`);
+      }
       const data = await res.json();
       setMessages((m) => [
         ...m,
@@ -42,7 +45,7 @@ export default function Home() {
         {
           role: "assistant",
           error: true,
-          content: `Could not reach the agent at ${API_URL}. Make sure the semantic layer (:4000) and agent API (:8001) are running. [${err.message}]`,
+          content: `Could not complete the request. Check that the semantic layer (:4000), agent API (:8001), and LM Studio local server are running. [${err.message}]`,
         },
       ]);
     } finally {

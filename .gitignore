@@ -32,6 +32,9 @@ logs/
 *.duckdb
 *.duckdb.wal
 
+# ── Cube local cache ──
+cube/.cubestore/
+
 # ── OS / editor ──
 .DS_Store
 Thumbs.db
